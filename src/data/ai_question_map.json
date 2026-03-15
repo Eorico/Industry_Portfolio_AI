@@ -1,0 +1,39 @@
+{
+    "about": [
+        "who is eorico",
+        "who is the owner of the portfolio",
+        "tell me about eorico",
+        "introduce yourself",
+        "what do you do for a living",
+        "what is your role"
+    ],
+
+    "education":[
+        "what is your education background", 
+        "where did you study",
+        "what school or university did you attend",
+        "what is your course in college",
+        "tell me about your studies"
+    ],
+
+    "experience": [
+        "work experience",
+        "job history",
+        "professional experience",
+        "project you worked on"
+    ],
+
+    "skills": [
+        "what are your skills",
+        "technologies you use",
+        "programming languages",
+        "technical skills"
+    ],
+
+    "achievements": [
+        "achievements",
+        "awards",
+        "certfications",
+        "recognitions"
+    ]
+}
