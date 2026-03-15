@@ -11,10 +11,14 @@ class ChatBotServices:
         self.portfolio_cache = self.repo.get_portfolio()
         
     def _chatbot_load_questions(self):
-        base_path = Path(__file__).resolve().parent
-        file_path = base_path.parent / "data" / "ai_question_map.json"
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            base_path = Path(__file__).resolve().parent
+            file_path = base_path.parent / "data" / "ai_question_map.json"
+            with open(file_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print("Failed to load AI questions JSON:", e)
+            return {}
         
     def _chatbot_get_portfolio(self):
         if not self.portfolio_cache:
@@ -54,6 +58,8 @@ class ChatBotServices:
             f"""
                 {e.get("school")} ({e.get("year")}) - {e.get("course")}        
             """)
+        
+        if text:
             
             return f"{serv_enums.SHOW_DATA.value[0]}" + "\n".join(text)
             
@@ -71,6 +77,8 @@ class ChatBotServices:
             f"""
                 {e.get("title")} ({e.get("year")}) - {e.get("description")}        
             """)
+            
+        if text:
             
             return f"{serv_enums.SHOW_DATA.value[1]}" + "\n".join(text)
         
@@ -110,46 +118,52 @@ class ChatBotServices:
                 {a.get("title")} ({a.get("year")})     
             """)
             
+        if text:
+            
             return f"{serv_enums.SHOW_DATA.value[3]}" + "\n".join(text)
         
         return f"{serv_enums.NO_DATA.value}"
 
     def chatbot_ask(self, question: str) -> str:
-        q = question.lower()
-        
-        best_confidence = 0
-        best_category = None
-        
-        for category, questions in self.questions_map.items():
-            for sample in questions:
-                confidence = fuzz.ratio(q, sample)
-                
-                if confidence > best_confidence:
-                    best_confidence = confidence
-                    best_category = category
+        try:
+            q = question.lower()
+            
+            best_confidence = 0
+            best_category = None
+            
+            for category, questions in self.questions_map.items():
+                for sample in questions:
+                    confidence = fuzz.ratio(q, sample)
                     
-        if best_confidence < 35:
-            return """
-                        I'm not sure about that yet 🤔
+                    if confidence > best_confidence:
+                        best_confidence = confidence
+                        best_category = category
+                        
+            if best_confidence < 35:
+                return """
+                            I'm not sure about that yet 🤔
 
-                        You can ask me things like:
-                        • Who is Eorico?
-                        • What are your skills?
-                        • What is your education?
-                        • Tell me about your experience
-                    """
-                    
-        handlers = {
-            "about": self._chatbot_get_about,
-            "education": self._chatbot_get_education,
-            "experience": self._chatbot_get_experience,
-            "skills": self._chatbot_get_skills,
-            "achievements": self._chatbot_get_achievements
-        }
-                    
-        handler = handlers.get(best_category)
-        
-        if handler:
-            return handler()
-        
-        return serv_enums.NO_DATA.value
+                            You can ask me things like:
+                            • Who is Eorico?
+                            • What are your skills?
+                            • What is your education?
+                            • Tell me about your experience
+                        """
+                        
+            handlers = {
+                "about": self._chatbot_get_about,
+                "education": self._chatbot_get_education,
+                "experience": self._chatbot_get_experience,
+                "skills": self._chatbot_get_skills,
+                "achievements": self._chatbot_get_achievements
+            }
+                        
+            handler = handlers.get(best_category)
+            
+            if handler:
+                return handler()
+            
+            return serv_enums.NO_DATA.value
+        except Exception as e:
+            print("Chatbot as handler error:", e)
+            return serv_enums.NO_DATA.value
