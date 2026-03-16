@@ -75,7 +75,7 @@ class ChatBotServices:
         for e in experience:
             text.append(
             f"""
-                {e.get("title")} ({e.get("year")}) - {e.get("description")}        
+                {e.get("role")} ({e.get("year")}) - {e.get("description")}        
             """)
             
         if text:
@@ -89,20 +89,33 @@ class ChatBotServices:
         
         skills = portfolio.get(db_enums.TECH_SKILLS.value) if portfolio else None
         print("Debug skills:", skills)
-        if skills:
-            return f"""
+        
+        if not skills:
+            return f"{serv_enums.NO_DATA.value}"
+        
+        overview = ", ".join(skills.get("topSkills", []))
+        
+        cat_map = {}
+        for c in skills.get("categories", []):
+            cat_name = c.get("categories")
+            cat_skills = ", ".join(c.get(db_enums.TOPSKILLS.value), [])
+            cat_map[cat_name] = cat_skills
+        
+  
+        return f"""
                 Great question! 👨‍💻
 
-                {serv_enums.SHOW_DATA.value[2]} 
+                Great question! 👨‍💻
+                {serv_enums.SHOW_DATA.value[2]}
 
-                Languages: {skills.get(db_enums.OVERVIEW.value)}
-                Web Development: {skills.get(db_enums.WEB_DEVELOPMENT.value)}
-                Backend Development: {skills.get(db_enums.BACKEND_DEVELOPMENT.value)}
-                Mobile Development: {skills.get(db_enums.MOBILE_DEVELOPMENT.value)}
-                Tools: {skills.get(db_enums.TOOLS.value)}
-                Database: {skills.get(db_enums.DATABASE.value)}
+                Languages / Top Skills: {overview}
+                Web Development: {cat_map.get(db_enums.WEB_DEVELOPMENT.value, "None")}
+                Backend Development: {cat_map.get(db_enums.BACKEND_DEVELOPMENT.value, "None")}
+                Mobile Development: {cat_map.get(db_enums.MOBILE_DEVELOPMENT.value, "None")}
+                Device Programming: {cat_map.get(db_enums.DEVICE_PROGRAMMING.value, "None")}
+                Tools: {cat_map.get(db_enums.TOOLS.value, "None")}
+                Database: {cat_map.get(db_enums.DATABASE.value, "None")}
             """
-        return f"{serv_enums.NO_DATA.value}"
 
     def _chatbot_get_achievements(self) -> str:
         portfolio = self._chatbot_get_portfolio()

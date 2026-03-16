@@ -8,12 +8,13 @@ class MongoDBEnums(Enum):
     TECH_SKILLS = "tech-skills"
     ACHIEVEMENTS = "achievements"
     
-    OVERVIEW = "overviewlanguages"
-    WEB_DEVELOPMENT = "webdevelopment"
-    BACKEND_DEVELOPMENT = "backenddevelopment"
-    MOBILE_DEVELOPMENT = "mobiledevelopment"
-    TOOLS = "tools"
-    DATABASE = "database"
+    TOPSKILLS = "topSkills"
+    WEB_DEVELOPMENT = "Web Development"
+    BACKEND_DEVELOPMENT = "Backend"
+    MOBILE_DEVELOPMENT = "Mobile Development"
+    DEVICE_PROGRAMMING = "Device Programming"
+    TOOLS = "Tools"
+    DATABASE = "Database"
     
 class ServicesEnums(Enum):
     NO_DATA = "No available information about this section."
