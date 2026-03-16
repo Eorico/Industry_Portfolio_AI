@@ -1,5 +1,7 @@
 from repositories.repositories import Repositories
 from enums.enums import MongoDBEnums as db_enums, ServicesEnums as serv_enums
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
 from rapidfuzz import fuzz
 from pathlib import Path
 import json
@@ -9,6 +11,12 @@ class ChatBotServices:
         self.repo = repository
         self.questions_map = self._chatbot_load_questions()
         self.portfolio_cache = self.repo.get_portfolio()
+        
+        self.question_frequency = {}
+        self.last_question = None
+        
+        self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+        self.embedding_cache = {}
         
     def _chatbot_load_questions(self):
         try:
@@ -93,19 +101,19 @@ class ChatBotServices:
         if not skills:
             return f"{serv_enums.NO_DATA.value}"
         
-        overview = ", ".join(skills.get("topSkills", []))
+        overview = ", ".join(skills.get(db_enums.TOPSKILLS.value, []))
         
         cat_map = {}
+        
         for c in skills.get("categories", []):
             cat_name = c.get("categories")
-            cat_skills = ", ".join(c.get(db_enums.TOPSKILLS.value), [])
+            cat_skills = ", ".join(c.get(db_enums.SKILLS.value), [])
             cat_map[cat_name] = cat_skills
         
   
         return f"""
                 Great question! 👨‍💻
 
-                Great question! 👨‍💻
                 {serv_enums.SHOW_DATA.value[2]}
 
                 Languages / Top Skills: {overview}
@@ -136,6 +144,23 @@ class ChatBotServices:
             return f"{serv_enums.SHOW_DATA.value[3]}" + "\n".join(text)
         
         return f"{serv_enums.NO_DATA.value}"
+    
+    def _chatbot_get_embedding(self, text: str):
+        if text not in self.embedding_cache:
+            self.embedding_cache[text] = self.embedding_model.encode(text)
+            
+        return self.embedding_cache[text]
+    
+    def _chatbot_semantic_similarity(self, question: str, sample: str):
+        q_vec = self._chatbot_get_embedding(question)
+        s_vec = self._chatbot_get_embedding(sample)
+        
+        similarity = cosine_similarity(
+            [q_vec],
+            [s_vec] 
+        )[0][0]
+        
+        return similarity * 100
 
     def chatbot_ask(self, question: str) -> str:
         try:
@@ -146,7 +171,9 @@ class ChatBotServices:
             
             for category, questions in self.questions_map.items():
                 for sample in questions:
-                    confidence = fuzz.ratio(q, sample)
+                    fuzzy_score = fuzz.ratio(q, sample)
+                    semantice_score = self._chatbot_semantic_similarity(q, sample)
+                    confidence = (fuzzy_score * 0.6) + (semantice_score * 0.4)
                     
                     if confidence > best_confidence:
                         best_confidence = confidence

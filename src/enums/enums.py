@@ -7,7 +7,8 @@ class MongoDBEnums(Enum):
     EXPERIENCE = "experience"
     TECH_SKILLS = "tech-skills"
     ACHIEVEMENTS = "achievements"
-    
+
+    SKILLS = "skills"
     TOPSKILLS = "topSkills"
     WEB_DEVELOPMENT = "Web Development"
     BACKEND_DEVELOPMENT = "Backend"
@@ -21,7 +22,7 @@ class ServicesEnums(Enum):
 
     SHOW_DATA = (
         "Here is my educational background:\n\n",
-        "Here is are some of my experiences:\n\n",
+        "Here are some of my experiences:\n\n",
         "Here are some of my technical skills:",
         "Here are some of my achievements:\n\n",
     )
