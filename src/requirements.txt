@@ -4,5 +4,3 @@ pydantic
 pymongo
 python-dotenv
 rapidfuzz
-sentence_transformers
-scikit-learn

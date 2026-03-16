@@ -1,10 +1,8 @@
 from repositories.repositories import Repositories
 from enums.enums import MongoDBEnums as db_enums, ServicesEnums as serv_enums
-from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 from rapidfuzz import fuzz
 from pathlib import Path
-import json
+import json 
 
 class ChatBotServices:
     def __init__(self, repository: Repositories):
@@ -14,9 +12,6 @@ class ChatBotServices:
         
         self.question_frequency = {}
         self.last_question = None
-        
-        self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-        self.embedding_cache = {}
         
     def _chatbot_load_questions(self):
         try:
@@ -101,19 +96,19 @@ class ChatBotServices:
         if not skills:
             return f"{serv_enums.NO_DATA.value}"
         
-        overview = ", ".join(skills.get(db_enums.TOPSKILLS.value, []))
+        overview = ", ".join(skills.get("topSkills", []))
         
         cat_map = {}
-        
         for c in skills.get("categories", []):
             cat_name = c.get("categories")
-            cat_skills = ", ".join(c.get(db_enums.SKILLS.value), [])
+            cat_skills = ", ".join(c.get(db_enums.TOPSKILLS.value), [])
             cat_map[cat_name] = cat_skills
         
   
         return f"""
                 Great question! 👨‍💻
 
+                Great question! 👨‍💻
                 {serv_enums.SHOW_DATA.value[2]}
 
                 Languages / Top Skills: {overview}
@@ -145,35 +140,41 @@ class ChatBotServices:
         
         return f"{serv_enums.NO_DATA.value}"
     
-    def _chatbot_get_embedding(self, text: str):
-        if text not in self.embedding_cache:
-            self.embedding_cache[text] = self.embedding_model.encode(text)
+    def _chatbot_track_frequency(self, question: str):
+        if question not in self.question_frequency:
+            self.question_frequency[question] = 0
             
-        return self.embedding_cache[text]
-    
-    def _chatbot_semantic_similarity(self, question: str, sample: str):
-        q_vec = self._chatbot_get_embedding(question)
-        s_vec = self._chatbot_get_embedding(sample)
+        self.question_frequency[question] += 1
         
-        similarity = cosine_similarity(
-            [q_vec],
-            [s_vec] 
-        )[0][0]
-        
-        return similarity * 100
+    def _chatbot_learn_question(self, question: str, category: str):
+        if category not in self.questions_map:
+            self.questions_map[category] = []
+            
+        if question not in self.questions_map[category]:
+            self.questions_map[category].append(question)
+            print(f"AI learned new question: '{question}' under {category}")
 
     def chatbot_ask(self, question: str) -> str:
         try:
             q = question.lower()
+            
+            self._chatbot_track_frequency(q)
             
             best_confidence = 0
             best_category = None
             
             for category, questions in self.questions_map.items():
                 for sample in questions:
-                    fuzzy_score = fuzz.ratio(q, sample)
-                    semantice_score = self._chatbot_semantic_similarity(q, sample)
-                    confidence = (fuzzy_score * 0.6) + (semantice_score * 0.4)
+                    similarity = fuzz.ratio(q, sample)
+                    
+                    context_weight = 0
+                    
+                    if self.last_question and category in self.last_question:
+                        context_weight = 10
+                        
+                    frequency_weight = self.question_frequency.get(q, 0)
+                    
+                    confidence =  (similarity + context_weight + frequency_weight)/ 3
                     
                     if confidence > best_confidence:
                         best_confidence = confidence
@@ -201,6 +202,8 @@ class ChatBotServices:
             handler = handlers.get(best_category)
             
             if handler:
+                self._chatbot_learn_question(q, best_category)
+                self.last_question = q
                 return handler()
             
             return serv_enums.NO_DATA.value
