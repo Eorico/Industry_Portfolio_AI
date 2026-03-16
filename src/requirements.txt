@@ -5,4 +5,4 @@ pymongo
 python-dotenv
 rapidfuzz
 sentence_transformers
-sklearn
+sckikit-learn
